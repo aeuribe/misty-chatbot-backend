@@ -1,89 +1,73 @@
 require("dotenv").config();
 const express = require("express");
-const twilio = require('twilio');
 const cors = require("cors");
+const { auth } = require('express-oauth2-jwt-bearer');
 
 // Importamos las rutas
-const usuarioRoutes = require("./routes/usuarioRoutes");
-const negocioRoutes = require("./routes/negocioRoutes");
-const servicioRoutes = require("./routes/servicioRoutes");
-const mensajeRoutes = require("./routes/mensajeRoutes");
-const citaRoutes = require("./routes/citaRoutes");
+const userRoutes = require("./routes/userRoutes");
+const businessRoutes = require("./routes/businessRoutes");
+const serviceRoutes = require("./routes/serviceRoutes");
+const clientRoutes = require('./routes/clientRoutes');
+const unavailableRoutes = require('./routes/unavailableRoutes');
+const businessHoursRoutes = require('./routes/businessHoursRoutes');
+const appointmentRoutes = require('./routes/appointmentRoutes');
+const availableSlotsRoutes = require('./routes/availableSlotsRoutes');
+
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
 // 🔥 Crea las tablas automáticamente al iniciar
-require("./config/initDb");
+require("./config/initdb");
+
+
+// Authorization middleware. When used, the Access Token must
+// exist and be verified against the Auth0 JSON Web Key Set.
+const jwtCheck = auth({
+  audience: 'https://chatbot-backend/',
+  issuerBaseURL: 'https://dev-0yzo8yzxc4m3apb8.us.auth0.com/',
+  tokenSigningAlg: 'RS256'
+});
+
+// // enforce on all endpoints
+// app.use(jwtCheck);
+
 
 // Ruta de prueba para verificar que el servidor está activo
 app.get("/", (req, res) => {
   res.send("🚀 API funcionando correctamente!");
 });
 
-// Definir las rutas
-app.use("/api/usuarios", usuarioRoutes);
-app.use("/api/negocios", negocioRoutes);
-app.use("/api/servicios", servicioRoutes);
-app.use("/api/mensajes", mensajeRoutes);
-app.use("/api/citas", citaRoutes);
-
-//Credenciales de Twilio
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioNumber = process.env.TWILIO_PHONE_NUMBER;
-
-// Inicializa el cliente de Twilio
-const client = twilio(accountSid, authToken);
-
-console.log('Definiendo la ruta /api/webhook...');
-// Tu Webhook
-app.post('/api/webhook', (req, res) => {
-  console.log('Cuerpo de la solicitud:', req.body); // Agrega 
-  const mensajeRecibido = req.body.Body; // Obtiene el mensaje del usuario
-  let respuesta = '';
-
-  if (mensajeRecibido === '1') {
-    respuesta = 'Has seleccionado Agendar cita. Por favor, espera a que un agente te atienda.';
-  } else if (mensajeRecibido === '2') {
-    respuesta = 'Has seleccionado Consultar disponibilidad. Nuestros horarios son de Lunes a Viernes de 9am a 5pm.';
-  } else if (mensajeRecibido === '3') {
-    respuesta = 'Has seleccionado Cancelar cita. Por favor, proporciona el número de confirmación de tu cita.';
-  } else {
-    respuesta = '¡Bienvenido a nuestro servicio de gestión de citas!\n\n' +
-                'Selecciona una opción:\n\n' +
-                '1. Agendar cita\n' +
-                '2. Consultar disponibilidad\n\n' +
-                '3. Cancelar cita';
-  }
-
-  // Envía la respuesta usando la API de Twilio
-  client.messages
-  .create({
-      to: 'whatsapp:+584242077190',
-      from: 'whatsapp:+14155238886',
-      body: respuesta
-  })
-  .then(message => console.log(`Mensaje enviado con SID: ${message.sid}`))
-  .catch(error => console.error(`Error al enviar el mensaje: ${error}`));
-
-res.status(200).send('Mensaje recibido');
-
+app.get('/api/public', function(req, res) {
+  res.json({
+    message: 'Hello from a public endpoint! You don\'t need to be authenticated to see this.'
+  });
 });
 
-console.log('Ruta /api/webhook definida.');
+// This route needs authentication
+app.get('/api/private', jwtCheck, function(req, res) {
+  res.json({
+    message: 'Hello from a private endpoint! You need to be authenticated to see this.'
+  });
+});
+
+// Definir las rutas principales
+app.use('/api/users', userRoutes);
+app.use('/api/business',businessRoutes);
+app.use('/api/services', serviceRoutes);
+app.use('/api/client', clientRoutes);
+app.use('/api/unavailable', unavailableRoutes);
+app.use('/api/businessHours',businessHoursRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/available-slots', availableSlotsRoutes);
 
 // Manejo de rutas no encontradas
 app.use((req, res) => {
-  console.log(`❌ Ruta no encontrada: ${req.method} ${req.originalUrl}`); // Log de la ruta y el método
-  console.log('Cabeceras de la solicitud:', req.headers); // Log de las cabeceras
-
   res.status(404).json({
     message: "❌ Ruta no encontrada",
     method: req.method,
-    url: req.originalUrl,
-    headers: req.headers
+    url: req.originalUrl
   });
 });
 
