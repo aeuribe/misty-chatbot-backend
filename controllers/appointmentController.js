@@ -58,10 +58,11 @@ const AppointmentController = {
             res.status(500).json({ error: error.message }); // Manejo de errores
         }
     },
-    async getAllAppointmentsByNumber(req, res) {
-        const { clientId } = req.params;
+    async getAllAppointmentsByEmail(req, res) {
+        const { email } = req.params;
         try {
-            const appointments = await AppointmentService.getAllAppointmentsByClientId(clientId);
+            console.log("desde el backend he recibido el email:", email);
+            const appointments = await AppointmentService.getAllAppointmentsByEmail(email);
             res.status(200).json(appointments); // Devuelve la lista de citas del cliente
         } catch (error) {
             res.status(500).json({ error: error.message }); // Manejo de errores
