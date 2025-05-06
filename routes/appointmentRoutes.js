@@ -12,6 +12,7 @@ router.get('/clients/:clientId/appointments', AppointmentController.getAllAppoin
 router.get('/businesses/:businessId/appointments', AppointmentController.getAllAppointmentsByBusinessId); // Obtener citas por ID de negocio
 router.get('/email/:email', AppointmentController.getAllAppointmentsByEmail); //Obtener todos los datos relacionados a una cita por email
 router.put('/:id', AppointmentController.updateAppointment); // Actualizar cita por ID
+router.put('/:id/status', AppointmentController.updateStatus); // Actualizar estado de cita por ID
 router.delete('/:id', AppointmentController.deleteAppointment); // Eliminar cita por ID
 
 module.exports = router;

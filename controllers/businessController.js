@@ -22,6 +22,18 @@ const BusinessController = {
         }
     },
 
+    async getBusinessByEmail(req, res) {
+        console.log("he recibido el mensaje:", req);
+        const { email } = req.params;
+        try {
+            const business = await BusinessService.getBusinessByEmail(email);
+            if (!business) return res.status(404).json({ error: 'Business not found' });
+            res.status(200).json(business);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    },
+
     async getAllBusinesses(req, res) {
         try {
             const businesses = await BusinessService.getAllBusinesses();

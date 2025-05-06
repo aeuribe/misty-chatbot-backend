@@ -24,6 +24,11 @@ const BusinessService = {
         return result.rows[0];
     },
 
+    async getBusinessByEmail(email) {
+        const result = await pool.query('SELECT * FROM business WHERE business.email = $1',[email]);
+        return result.rows[0];
+    },
+
     async updateBusiness(businessId, userId, businessName, number, timezone, address) {
         const result = await pool.query(
             'UPDATE business SET user_id = $1, business_name = $2, number = $3, timezone = $4, address = $5 WHERE business_id = $6 RETURNING *',

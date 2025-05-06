@@ -108,6 +108,17 @@ const AppointmentService = {
     return result.rows[0];
   },
 
+  async updateStatus(appointmentId, status) {
+    const result = await pool.query(
+      `UPDATE appointment SET 
+              status = $1 
+              WHERE appointment_id = $2 
+              RETURNING *`,
+      [status, appointmentId]
+    );
+    return result.rows[0];
+  },
+
   async deleteAppointment(appointmentId) {
     const result = await pool.query(
       "DELETE FROM appointment WHERE appointment_id = $1 RETURNING *",
